@@ -47,7 +47,7 @@ description: Analyze tender/bid/procurement documents and turn them into practic
 
 当用户需要把 HTML 交付物导出为 PDF、PNG 或 JPG 时，优先使用服务端友好的 Python 依赖链，不默认依赖桌面浏览器或本机 Chrome。
 
-客户版 PDF 默认是手机阅读版，不是 A4 打印版。应使用 Playwright 的 screen/mobile 版式导出：手机宽度约 `390-430px`、页面高度约一屏手机、`print_background=True`、文字保持 PDF 矢量可选中。不要用 A4 横版或 A4 竖版宽表直接给客户手机看；那会被 PDF 阅读器整体缩小，字体显得很小、分辨率也像不高。
+客户版 PDF 默认是手机阅读版，不是 A4 打印版。应使用 Playwright 的 screen/mobile 版式导出：手机宽度约 `390-430px`、页面高度用长手机页（约 `1200-1500px`），`print_background=True`，文字保持 PDF 矢量可选中。不要用 A4 横版或 A4 竖版宽表直接给客户手机看；那会被 PDF 阅读器整体缩小，字体显得很小、分辨率也像不高。
 
 - 推荐脚本：`scripts/export_html_artifacts.py`
 - 推荐依赖：`playwright`，并在服务器/容器中执行 `python -m playwright install chromium`

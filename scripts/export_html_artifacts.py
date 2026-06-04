@@ -103,13 +103,31 @@ def export_with_playwright(args) -> list[Path]:
         if is_mobile:
             page.add_style_tag(
                 content="""
-section, .signal-card, .action-step, tr, .fact {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
 header {
-  break-after: avoid;
-  page-break-after: avoid;
+  overflow: visible !important;
+}
+header::after {
+  display: none !important;
+}
+.facts,
+.signal-grid,
+.action-grid {
+  display: block !important;
+}
+.fact,
+.signal-card,
+.action-step,
+tr {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+  margin-bottom: 12px !important;
+}
+section,
+.table-wrap,
+table,
+tbody {
+  break-inside: auto !important;
+  page-break-inside: auto !important;
 }
 body {
   -webkit-print-color-adjust: exact;
@@ -156,7 +174,7 @@ def parse_args():
     parser.add_argument("--browser-executable", type=Path)
     parser.add_argument("--pdf-layout", choices=["mobile", "a4"], default="mobile")
     parser.add_argument("--viewport-width", type=int, default=430)
-    parser.add_argument("--viewport-height", type=int, default=932)
+    parser.add_argument("--viewport-height", type=int, default=1400)
     parser.add_argument("--device-scale-factor", type=float, default=2)
     parser.add_argument("--pdf-scale", type=float, default=1)
     args = parser.parse_args()
