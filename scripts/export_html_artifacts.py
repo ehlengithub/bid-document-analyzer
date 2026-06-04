@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Export a local HTML report to PDF and PNG/JPG with server-friendly Python deps.
+"""Export a local HTML report to PDF and PNG/JPG with server-friendly deps.
+
+Customer-facing reports default to a mobile-readable PDF: screen media,
+phone-width pages, large vector text, and no A4 shrink-to-fit behavior.
 
 Preferred dependencies:
   pip install playwright
   python -m playwright install chromium
 
-Optional PDF-first backend:
+Optional print/A4 backend:
   pip install weasyprint pymupdf pillow
 """
 
@@ -87,14 +90,49 @@ def export_with_playwright(args) -> list[Path]:
         if args.browser_executable:
             launch_kwargs["executable_path"] = str(args.browser_executable)
         browser = p.chromium.launch(**launch_kwargs)
-        page = browser.new_page(viewport={"width": args.viewport_width, "height": args.viewport_height})
+
+        is_mobile = args.pdf_layout == "mobile"
+        page = browser.new_page(
+            viewport={"width": args.viewport_width, "height": args.viewport_height},
+            device_scale_factor=args.device_scale_factor,
+            is_mobile=is_mobile,
+        )
+        if is_mobile:
+            page.emulate_media(media="screen")
         page.goto(html_path.as_uri(), wait_until="networkidle")
+        if is_mobile:
+            page.add_style_tag(
+                content="""
+section, .signal-card, .action-step, tr, .fact {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+header {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+body {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+"""
+            )
+
         if args.pdf:
+            if is_mobile:
+                pdf_size = {
+                    "width": f"{args.viewport_width}px",
+                    "height": f"{args.viewport_height}px",
+                }
+            else:
+                pdf_size = {"format": "A4"}
             page.pdf(
                 path=str(pdf_path),
-                format="A4",
                 print_background=True,
+                prefer_css_page_size=False,
                 margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
+                scale=args.pdf_scale,
+                **pdf_size,
             )
             outputs.append(pdf_path)
         if args.png:
@@ -107,7 +145,7 @@ def export_with_playwright(args) -> list[Path]:
     return outputs
 
 
-def main():
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("html", type=Path)
     parser.add_argument("--pdf", type=Path)
@@ -116,18 +154,26 @@ def main():
     parser.add_argument("--dpi", type=int, default=160)
     parser.add_argument("--backend", choices=["auto", "playwright", "weasyprint"], default="auto")
     parser.add_argument("--browser-executable", type=Path)
-    parser.add_argument("--viewport-width", type=int, default=1440)
-    parser.add_argument("--viewport-height", type=int, default=900)
+    parser.add_argument("--pdf-layout", choices=["mobile", "a4"], default="mobile")
+    parser.add_argument("--viewport-width", type=int, default=430)
+    parser.add_argument("--viewport-height", type=int, default=932)
+    parser.add_argument("--device-scale-factor", type=float, default=2)
+    parser.add_argument("--pdf-scale", type=float, default=1)
     args = parser.parse_args()
-
     if not args.pdf and not args.png and not args.jpg:
         raise SystemExit("Provide at least one output: --pdf, --png, or --jpg")
+    return args
 
-    outputs: list[Path]
+
+def main():
+    args = parse_args()
+
     if args.backend == "playwright":
         outputs = export_with_playwright(args)
     elif args.backend == "weasyprint":
         outputs = export_with_weasyprint(args)
+    elif args.pdf_layout == "mobile" and args.pdf:
+        outputs = export_with_playwright(args)
     else:
         try:
             outputs = export_with_weasyprint(args)
