@@ -1,6 +1,6 @@
 interface:
   display_name: "招标文件拆解"
-  short_description: "拆解招标文件，生成自然易懂且专业的客户清单、深度分析和内部判断材料包"
-  default_prompt: "Use $bid-document-analyzer to analyze this tender document and produce a client-ready checklist, client-facing deep analysis, and an internal bid/sales brief."
+  short_description: "拆解招标文件，生成低负荷客户清单、投标判断、内部销售卡和内部报价建议"
+  default_prompt: "Use $bid-document-analyzer to analyze this tender document and customer request, then produce a low-cognitive-load client checklist, client-facing bid decision card with no service pricing, internal sales brief, and internal-only bid-document production quote recommendation. Run the customer-delivery leak check before treating outputs as final."
 policy:
   allow_implicit_invocation: true
